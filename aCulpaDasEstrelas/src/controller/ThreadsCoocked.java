@@ -4,10 +4,12 @@ public class ThreadsCoocked extends Thread{
     private int prato;
     private double tempoDeCozimento;
     private Semaphore semaphore;
-    public ThreadsCoocked(Semaphore semaphore){
+    private Semaphore jogador;
+    public ThreadsCoocked(Semaphore semaphore, Semaphore semaphore1){
         this.prato = (int) getId();
         this.tempoDeCozimento = 0;
         this.semaphore= semaphore;
+        this.jogador = semaphore1;
     }
     public void run() {
         if(validaPrato()){
@@ -42,9 +44,6 @@ public class ThreadsCoocked extends Thread{
         }while (tempoDeCozimento<tempoDePreparo);
         pratoPronto();
     }
-    private int percentual(double tempoDePreparo){
-        return (int) ((tempoDeCozimento*100)/tempoDePreparo);
-    }
     private void pratoPronto() {
         try {
             semaphore.acquire();
@@ -53,13 +52,32 @@ public class ThreadsCoocked extends Thread{
             }else {
                 System.out.println("Lasanha bolonhesa: "+prato+" está pronta!!");
             }
-            sleep(500);
+            entregarPrato();
         } catch (InterruptedException e) {
-            pratoPronto();
+            throw new RuntimeException(e);
         }
         finally {
             semaphore.release();
         }
     }
+    private void entregarPrato() {
+        try{
+            jogador.acquire();
+            if(validaPrato()){
+                System.out.println("Sopa de cebola: "+prato+" está sendo entregue!!");
+            }else {
+                System.out.println("Lasanha bolonhesa: "+prato+" está sendo entregue!!");
+            }
+            sleep(500);
+        }catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            System.out.println(prato+"# Foi entregue!!");
+            jogador.release();
+        }
+    }
     private boolean validaPrato() { return (prato %2 == 0);}
+    private int percentual(double tempoDePreparo){
+        return (int) ((tempoDeCozimento*100)/tempoDePreparo);
+    }
 }
